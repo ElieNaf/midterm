@@ -2,6 +2,7 @@
 const whiteboardSessionService = require("../services/whiteboardSessionService");
 
 class WhiteboardSessionController {
+  // Controller for creating a whiteboard session
   async createSession(req, res) {
     try {
       const session = await whiteboardSessionService.createSession(req.body);
@@ -11,6 +12,7 @@ class WhiteboardSessionController {
     }
   }
 
+  // Controller for retrieving session by ID
   async getSessionById(req, res) {
     try {
       const { sessionID } = req.params;
@@ -25,6 +27,7 @@ class WhiteboardSessionController {
     }
   }
 
+  // Controller for retrieving all sessions
   async getAllSessions(req, res) {
     try {
       const sessions = await whiteboardSessionService.getAllSessions();
@@ -34,6 +37,7 @@ class WhiteboardSessionController {
     }
   }
 
+  // Controller for updating a session
   async updateSession(req, res) {
     try {
       const { sessionID } = req.params;
@@ -47,6 +51,7 @@ class WhiteboardSessionController {
     }
   }
 
+  // Controller for deleting a session
   async deleteSession(req, res) {
     try {
       const { sessionID } = req.params;

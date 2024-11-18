@@ -1,10 +1,11 @@
+// services/roomParticipantsService.js
 const { RoomParticipant } = require("../models");
+
 console.log("RoomParticipant model:", RoomParticipant);
 
-
+// Adds a participant to a room, checking if they are already added
 const addParticipant = async (roomID, UserID) => {
   try {
-    // Check if the participant already exists in the room
     const existingParticipant = await RoomParticipant.findOne({
       where: { roomID, UserID },
     });
@@ -13,12 +14,7 @@ const addParticipant = async (roomID, UserID) => {
       throw new Error("User is already a participant in this room");
     }
 
-    // If the participant doesn't exist, create a new one
-    const newParticipant = await RoomParticipant.create({
-      roomID,
-      UserID,
-    });
-
+    const newParticipant = await RoomParticipant.create({ roomID, UserID });
     return newParticipant.get({ plain: true });
   } catch (error) {
     console.error("Error adding participant:", error);
@@ -26,8 +22,7 @@ const addParticipant = async (roomID, UserID) => {
   }
 };
 
-
-
+// Fetches all participants in a given room
 const getAllParticipantsInRoom = async (roomID) => {
   try {
     const participants = await RoomParticipant.findAll({
@@ -42,11 +37,10 @@ const getAllParticipantsInRoom = async (roomID) => {
   }
 };
 
+// Fetches details of a specific participant by their ID
 const getParticipant = async (participantID) => {
-  console.log("getParticipant service called with participantID:", participantID);
   try {
     const participant = await RoomParticipant.findByPk(participantID);
-    console.log("Participant found:", participant);
     if (!participant) {
       throw new Error("Participant not found");
     }
@@ -57,8 +51,7 @@ const getParticipant = async (participantID) => {
   }
 };
 
-
-
+// Removes a participant from a room by their ID
 const removeParticipant = async (participantID) => {
   try {
     const participant = await RoomParticipant.findByPk(participantID);

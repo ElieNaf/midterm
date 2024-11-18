@@ -1,5 +1,6 @@
 const roomService = require("../services/roomservice");
 
+// Controller for creating a new room
 const createRoomController = async (req, res) => {
   const { roomName, isPrivate, createdByID } = req.body;
   try {
@@ -15,6 +16,7 @@ const createRoomController = async (req, res) => {
   }
 };
 
+// Controller for retrieving all rooms
 const getAllRoomsController = async (req, res) => {
   try {
     const rooms = await roomService.getAllRooms();
@@ -25,6 +27,7 @@ const getAllRoomsController = async (req, res) => {
   }
 };
 
+// Controller for retrieving a specific room by its ID
 const getRoomByIdController = async (req, res) => {
   const { roomID } = req.params;
   try {
@@ -36,6 +39,7 @@ const getRoomByIdController = async (req, res) => {
   }
 };
 
+// Controller for updating room details
 const updateRoomController = async (req, res) => {
   const { roomID } = req.params;
   const { roomName, isPrivate } = req.body;
@@ -52,6 +56,7 @@ const updateRoomController = async (req, res) => {
   }
 };
 
+// Controller for deleting a room by its ID
 const deleteRoomController = async (req, res) => {
   const { roomID } = req.params;
   try {
@@ -62,6 +67,8 @@ const deleteRoomController = async (req, res) => {
     res.status(404).json({ error: "Room not found" });
   }
 };
+
+// Controller for retrieving all rooms a user is part of
 const getRoomsForUserController = async (req, res) => {
   const userID = req.params.userID;
   try {

@@ -2,6 +2,7 @@
 const whiteboardPermissionService = require("../services/whiteboardPermissionService");
 
 class WhiteboardPermissionController {
+  // Controller for creating permissions
   async createPermission(req, res) {
     try {
       const permission = await whiteboardPermissionService.createPermission(
@@ -9,13 +10,11 @@ class WhiteboardPermissionController {
       );
       res.status(201).json(permission);
     } catch (error) {
-      console.error("Error creating permission:", error); // Log the full error details
-      res
-        .status(500)
-        .json({ error: "Failed to create permission", details: error.message });
+      res.status(500).json({ error: "Failed to create permission" });
     }
   }
 
+  // Controller for retrieving permission by its ID
   async getPermissionById(req, res) {
     try {
       const { permissionID } = req.params;
@@ -32,6 +31,7 @@ class WhiteboardPermissionController {
     }
   }
 
+  // Controller for retrieving all permissions for a session
   async getPermissionsBySession(req, res) {
     try {
       const { sessionID } = req.params;
@@ -43,6 +43,7 @@ class WhiteboardPermissionController {
     }
   }
 
+  // Controller for updating a specific permission
   async updatePermission(req, res) {
     try {
       const { permissionID } = req.params;
@@ -56,6 +57,7 @@ class WhiteboardPermissionController {
     }
   }
 
+  // Controller for deleting a specific permission
   async deletePermission(req, res) {
     try {
       const { permissionID } = req.params;

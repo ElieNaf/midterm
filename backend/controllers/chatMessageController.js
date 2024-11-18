@@ -2,6 +2,7 @@
 const chatMessageService = require("../services/chatMessageService");
 
 class ChatMessageController {
+  // Controller for creating a new chat message
   async createMessage(req, res) {
     try {
       const message = await chatMessageService.createMessage(req.body);
@@ -12,6 +13,7 @@ class ChatMessageController {
     }
   }
 
+  // Controller for retrieving all messages in a specific session
   async getMessagesBySession(req, res) {
     try {
       const { sessionID } = req.params;
@@ -23,6 +25,7 @@ class ChatMessageController {
     }
   }
 
+  // Controller for deleting a specific message by its ID
   async deleteMessage(req, res) {
     try {
       const { messageID } = req.params;
