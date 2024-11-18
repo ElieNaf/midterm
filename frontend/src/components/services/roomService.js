@@ -1,18 +1,19 @@
-import axios from 'axios';
+// services/roomService.js
+import axios from "axios";
 
-const API_URL = 'http://localhost:3002/api/rooms';
-const USERS_API_URL = 'http://localhost:3002/api/users'; 
-const PARTICIPANTS_API_URL = 'http://localhost:3002/api/room-participants';
+const API_URL = "http://localhost:3002/api/rooms"; // Base API URL for room operations
+const USERS_API_URL = "http://localhost:3002/api/users"; // API URL for user data
+const PARTICIPANTS_API_URL = "http://localhost:3002/api/room-participants"; // API URL for participants
 
-// Fetch rooms for the authenticated user
+// Fetch all rooms for the authenticated user
 export const fetchRooms = async (token) => {
   try {
     const response = await axios.get(API_URL, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}` }, // Include token in the request header
     });
     return response.data;
   } catch (error) {
-    throw new Error('Failed to load rooms.');
+    throw new Error("Failed to load rooms.");
   }
 };
 
@@ -22,20 +23,21 @@ export const fetchUsers = async () => {
     const response = await axios.get(USERS_API_URL);
     return response.data;
   } catch (error) {
-    throw new Error('Failed to load users.');
+    throw new Error("Failed to load users.");
   }
 };
-// Fetch rooms where the user is either the creator or a participant
+
+// Fetch all rooms where a specific user is a participant or the creator
 export const fetchRoomsForUser = async (userID) => {
   try {
     const response = await axios.get(`${API_URL}/user/${userID}`);
     return response.data;
   } catch (error) {
-    throw new Error('Failed to load rooms for user.');
+    throw new Error("Failed to load rooms for user.");
   }
 };
 
-// Add a participant to a specific room
+// Add a new participant to a room
 export const addParticipantToRoom = async (roomID, userID) => {
   try {
     const response = await axios.post(PARTICIPANTS_API_URL, {
@@ -44,7 +46,7 @@ export const addParticipantToRoom = async (roomID, userID) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error('Failed to add participant to the room.');
+    throw new Error("Failed to add participant to the room.");
   }
 };
 
@@ -55,11 +57,11 @@ export const deleteRoom = async (token, roomID) => {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch (error) {
-    throw new Error('Failed to delete room.');
+    throw new Error("Failed to delete room.");
   }
 };
 
-// Update a room's name by its ID
+// Update the name of a specific room
 export const updateRoomName = async (token, roomID, newRoomName) => {
   try {
     const response = await axios.put(
@@ -69,12 +71,17 @@ export const updateRoomName = async (token, roomID, newRoomName) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error('Failed to update room.');
+    throw new Error("Failed to update room.");
   }
 };
 
 // Create a new room
-export const createRoom = async (token, roomName, createdByID, isPrivate = false) => {
+export const createRoom = async (
+  token,
+  roomName,
+  createdByID,
+  isPrivate = false
+) => {
   try {
     const response = await axios.post(
       API_URL,
@@ -83,6 +90,6 @@ export const createRoom = async (token, roomName, createdByID, isPrivate = false
     );
     return response.data;
   } catch (error) {
-    throw new Error('Failed to create room.');
+    throw new Error("Failed to create room.");
   }
 };

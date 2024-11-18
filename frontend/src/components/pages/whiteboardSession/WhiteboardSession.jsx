@@ -4,30 +4,31 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import "./WhiteboardSession.css";
 
-const socket = io("http://localhost:3002"); 
+// Initialize Socket.io client connection
+const socket = io("http://localhost:3002");
 
 const WhiteboardSession = () => {
-  const { roomId } = useParams();
-  const navigate = useNavigate();
-  const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const [contentID, setContentID] = useState(null); // Store content ID for updates
+  const { roomId } = useParams(); // Get roomId from URL parameters
+  const navigate = useNavigate(); // Navigation hook for routing
+  const canvasRef = useRef(null); // Reference to the canvas element
+  const [isDrawing, setIsDrawing] = useState(false); // State to track drawing status
+  const [messages, setMessages] = useState([]); // State to store chat messages
+  const [message, setMessage] = useState(""); // State for new chat message
+  const [contentID, setContentID] = useState(null); // State to store content ID for updates
 
-  // Fetch content ID and data when component loads
+  // Fetch initial content and messages when the component mounts
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
-    // Set canvas dimensions
+    // Set canvas dimensions and properties
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-
     context.lineWidth = 2;
     context.lineCap = "round";
     context.strokeStyle = "#000";
 
+    // Fetch whiteboard content from the server
     const fetchContent = async () => {
       try {
         const response = await axios.get(
@@ -38,7 +39,7 @@ const WhiteboardSession = () => {
           if (response.data.data) {
             const img = new Image();
             img.src = response.data.data;
-            img.onload = () => context.drawImage(img, 0, 0);
+            img.onload = () => context.drawImage(img, 0, 0); // Draw saved content
           }
         }
       } catch (error) {
@@ -46,6 +47,7 @@ const WhiteboardSession = () => {
       }
     };
 
+    // Fetch chat messages from the server
     const fetchMessages = async () => {
       try {
         const response = await axios.get(
@@ -60,8 +62,9 @@ const WhiteboardSession = () => {
     fetchContent();
     fetchMessages();
 
-    // Join the session room and set up event listeners
+    // Join the room and set up socket listeners
     socket.emit("joinRoom", { sessionID: roomId });
+
     socket.on("startPath", (data) => {
       if (data.sessionID !== roomId) return;
       const context = canvas.getContext("2d");
@@ -97,7 +100,7 @@ const WhiteboardSession = () => {
     };
   }, [roomId]);
 
-  // Clear canvas and save the cleared state to the database
+  // Clear the canvas and save the cleared state to the database
   const clearCanvas = async () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -107,13 +110,12 @@ const WhiteboardSession = () => {
 
     try {
       const blankDataURL = canvas.toDataURL("image/png"); // Blank canvas data URL
-
       if (!contentID) {
         console.error("Content ID not available. Cannot clear canvas.");
         return;
       }
 
-      // Update the canvas in the database using PUT request
+      // Save cleared canvas state to the server
       await axios.put(`http://localhost:3002/api/content/${contentID}`, {
         sessionID: roomId,
         data: blankDataURL,
@@ -125,6 +127,7 @@ const WhiteboardSession = () => {
     }
   };
 
+  // Start drawing on the canvas
   const startDrawing = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -141,7 +144,9 @@ const WhiteboardSession = () => {
     });
   };
 
-  let lastPosition = null;
+  let lastPosition = null; // Track the last position for smoother drawing
+
+  // Draw on the canvas
   const draw = (e) => {
     if (!isDrawing) return;
 
@@ -153,8 +158,8 @@ const WhiteboardSession = () => {
     const context = canvas.getContext("2d");
     if (lastPosition) {
       context.beginPath();
-      context.moveTo(lastPosition.x, lastPosition.y); // Start from the last position
-      context.lineTo(offsetX, offsetY); // Draw to the current position
+      context.moveTo(lastPosition.x, lastPosition.y);
+      context.lineTo(offsetX, offsetY);
       context.stroke();
       context.closePath();
     }
@@ -168,13 +173,15 @@ const WhiteboardSession = () => {
     });
   };
 
+  // Stop drawing and save the canvas content
   const stopDrawing = () => {
     setIsDrawing(false);
-    lastPosition = null; // Reset last position when drawing stops
+    lastPosition = null;
     socket.emit("endDrawing", { sessionID: roomId });
     saveDrawing();
   };
 
+  // Save the current drawing to the server
   const saveDrawing = async () => {
     try {
       const dataURL = canvasRef.current.toDataURL("image/png");
@@ -188,6 +195,7 @@ const WhiteboardSession = () => {
     }
   };
 
+  // Send a chat message
   const sendMessage = () => {
     if (!message.trim()) return;
 
@@ -219,10 +227,10 @@ const WhiteboardSession = () => {
         backgroundPosition: "center",
       }}
     >
+      {/* Whiteboard Section */}
       <div className="flex-container">
-        {/* Whiteboard Section */}
         <div className="whiteboard-container">
-          <h2>Whiteboard Session </h2>
+          <h2>Whiteboard Session</h2>
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
@@ -254,32 +262,14 @@ const WhiteboardSession = () => {
               placeholder="Type a message..."
             />
             <button onClick={sendMessage} className="chat-send-button">
-              <div className="svg-wrapper-1">
-                <div className="svg-wrapper">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                  >
-                    <path fill="none" d="M0 0h24v24H0z"></path>
-                    <path
-                      fill="currentColor"
-                      d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"
-                    ></path>
-                  </svg>
-                </div>
-              </div>
-              <span>Send</span>
+              Send
             </button>
           </div>
         </div>
       </div>
+
       {/* Back Button */}
-      <button
-        className="back-button"
-        onClick={() => navigate("/")} // Navigate to the homepage
-      >
+      <button className="back-button" onClick={() => navigate("/")}>
         Back to Homepage
       </button>
     </div>
