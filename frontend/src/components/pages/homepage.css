@@ -1,0 +1,280 @@
+/* General Container */
+.homepage-container {
+  font-family: "Poppins", sans-serif;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Page Title */
+.homepage-container h2 {
+  font-size: 3rem;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+}
+
+/* Error Message */
+.error-message {
+  color: #ff5a5f;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+/* Create Room Button */
+.button-create-room {
+  background: linear-gradient(45deg, #6a11cb, #2575fc);
+  color: #fff;
+  font-size: 16px;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(98, 0, 234, 0.4);
+  transition: all 0.3s ease-in-out;
+}
+
+.button-create-room:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(98, 0, 234, 0.6);
+}
+
+.button-create-room:active {
+  transform: scale(0.95);
+}
+
+/* Table Container */
+.rooms-table {
+  width: 90%;
+  max-width: 900px;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Table Headers */
+.rooms-table th {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 18px;
+  text-transform: uppercase;
+  padding: 15px 20px;
+}
+
+/* Table Rows */
+.rooms-table td {
+  padding: 15px 20px;
+  text-align: left;
+  color: #fff;
+}
+
+.rooms-table tr {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.rooms-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Room Link */
+.room-link {
+  color: #50b3f3;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.room-link:hover {
+  color: #6a11cb;
+}
+
+/* Select Dropdown */
+select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 160px;
+}
+
+select option {
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+}
+
+/* Add User Button */
+button {
+  background: linear-gradient(45deg, #6a11cb, #2575fc);
+  color: #fff;
+  font-size: 14px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(98, 0, 234, 0.6);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+/* Gear Icon */
+.gear-icon {
+  color: #50b3f3;
+  font-size: 18px;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.gear-icon:hover {
+  color: #6a11cb;
+}
+
+/* Modal Overlay */
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85); /* Darker background to focus on the modal */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background: rgba(255, 255, 255, 0.15); /* Subtle transparency for contrast */
+  border-radius: 16px;
+  padding: 30px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out; /* Animation for smooth appearance */
+}
+
+/* Modal Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Modal Title */
+.modal-content h3 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Modal Input */
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: #fff;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.modal-content input:focus {
+  border-bottom-color: #50b3f3;
+  outline: none;
+}
+
+/* Buttons in Modal */
+.modal-content button {
+  background: linear-gradient(45deg, #2575fc, #6a11cb);
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  margin: 10px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+}
+
+.modal-content button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(98, 0, 234, 0.5);
+}
+
+.modal-content button:active {
+  transform: scale(0.95);
+}
+
+/* Close Icon */
+.close-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-icon:hover {
+  color: #ff5a5f;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .rooms-table {
+    width: 100%;
+  }
+
+  .button-create-room {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  select {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .modal-content {
+    width: 90%;
+  }
+}

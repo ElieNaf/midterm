@@ -1,0 +1,147 @@
+/* Center the login form on the page */
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    font-family: "Poppins", sans-serif;
+    color: #fff;
+  }
+  
+  /* Login form container */
+  .login-box {
+    width: 100%;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  /* Subtle hover effect */
+  .login-box:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Title styles */
+  .login-box h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: #fff;
+  }
+  
+  /* Form Control Styling */
+  .form-control {
+    position: relative;
+    margin: 20px 0 40px;
+    width: 100%;
+  }
+  
+  .form-control input {
+    background-color: transparent;
+    border: 0;
+    border-bottom: 2px #fff solid;
+    display: block;
+    width: 100%;
+    padding: 15px 0;
+    font-size: 18px;
+    color: #fff;
+  }
+  
+  .form-control input:focus,
+  .form-control input:valid {
+    outline: 0;
+    border-bottom-color: lightblue;
+  }
+  
+  .form-control label {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    pointer-events: none;
+  }
+  
+  .form-control label span {
+    display: inline-block;
+    font-size: 18px;
+    min-width: 5px;
+    color: #fff;
+    transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  .form-control input:focus + label span,
+  .form-control input:valid + label span {
+    color: lightblue;
+    transform: translateY(-30px);
+  }
+  
+  /* Button styles */
+  .login-box button {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(45deg, #2575fc, #6a11cb);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+  }
+  
+  /* Hover state for button */
+  .login-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(98, 0, 234, 0.5);
+  }
+  
+  .login-box button:active {
+    transform: scale(0.98);
+  }
+  
+  /* Error message styles */
+  .error-message {
+    color: #ff5a5f;
+    margin-top: 10px;
+    font-size: 0.9rem;
+  }
+  .signup-link {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #fff;
+    text-align: center;
+  }
+  
+  .signup-link .signup-button {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(45deg, #2575fc, #6a11cb);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+  }
+  
+  
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .login-box {
+      width: 90%;
+    }
+  }
+  

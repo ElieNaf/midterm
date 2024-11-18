@@ -1,0 +1,205 @@
+/* General Container */
+.container {
+  font-family: "Poppins", sans-serif;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+}
+
+/* Flex Layout for Canvas and Chat */
+.flex-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Whiteboard Section */
+.whiteboard-container {
+  background: rgba(0, 0, 0, 0.6); /* Darker background to enhance contrast */
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  flex: 2; /* Take more space relative to chat */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.whiteboard-container h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+canvas {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  height: 500px;
+  cursor: crosshair;
+  background: rgba(255, 255, 255, 0.1); /* Subtle background for contrast */
+}
+
+/* Chat Section */
+.chat-container {
+  background: rgba(0, 0, 0, 0.6); /* Matches whiteboard background */
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  flex: 1; /* Take less space relative to canvas */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.chat-container h3 {
+  font-size: 1.8rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: 10px;
+}
+
+/* Chat Messages */
+.chat-messages {
+  max-height: 300px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.1); /* Matches canvas background */
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chat-messages div {
+  margin-bottom: 10px;
+  color: #fff;
+  word-wrap: break-word; /* Ensure long text breaks */
+}
+
+.chat-messages strong {
+  color: #50b3f3;
+}
+
+/* Chat Input */
+.chat-input-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  outline: none;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.chat-input:focus {
+  border-color: #50b3f3;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Send Button */
+.chat-send-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background: linear-gradient(45deg, #2575fc, #6a11cb);
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  gap: 8px;
+  box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+  transition: all 0.3s ease-in-out;
+}
+
+.chat-send-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(98, 0, 234, 0.6);
+}
+
+.chat-send-button:active {
+  transform: scale(0.95);
+}
+
+.svg-wrapper-1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg-wrapper svg {
+  fill: #fff;
+  transition: fill 0.3s ease;
+}
+
+.svg-wrapper svg:hover {
+  fill: #50b3f3;
+}
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(45deg, #2575fc, #6a11cb);
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+  transition: transform 0.2s ease-in-out, background-color 0.3s ease;
+}
+
+.back-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(98, 0, 234, 0.6);
+}
+
+.back-button:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flex-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .whiteboard-container,
+  .chat-container {
+    width: 100%;
+    padding: 15px;
+  }
+
+  canvas {
+    height: 400px;
+  }
+
+  .chat-input {
+    font-size: 14px;
+  }
+
+  .chat-send-button {
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+}

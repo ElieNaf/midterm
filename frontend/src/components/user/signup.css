@@ -1,0 +1,129 @@
+/* Center the form on the page */
+.signup-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    font-family: "Poppins", sans-serif; /* Updated modern font */
+    color: #fff;
+  }
+  
+  /* Form container */
+  .signup-form-container {
+    width: 100%;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.1); /* Subtle transparency */
+    padding: 40px; /* Increased padding */
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  /* Subtle hover effect */
+  .signup-form-container:hover {
+    transform: scale(1.02); /* Slight scaling effect */
+  }
+  
+  /* Title styles */
+  .signup-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Message styles */
+  .signup-message {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #fff;
+  }
+  
+  /* Form fields */
+  .form-control {
+    position: relative;
+    margin: 20px 0;
+  }
+  
+  .form-control input {
+    background-color: transparent;
+    border: 0;
+    border-bottom: 2px solid #fff;
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #fff;
+    transition: border-bottom-color 0.3s ease;
+  }
+  
+  /* Focus state for input fields */
+  .form-control input:focus,
+  .form-control input:valid {
+    outline: none;
+    border-bottom-color: #50b3f3; /* Brighter focus color */
+  }
+  
+  /* Label */
+  .form-control label {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    pointer-events: none;
+    font-size: 14px;
+    color: #aaa;
+    transition: all 0.3s ease;
+  }
+  
+  .form-control label span {
+    display: inline-block;
+    transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  .form-control input:focus + label span,
+  .form-control input:valid + label span {
+    color: #50b3f3;
+    transform: translateY(-30px);
+  }
+  
+  /* Button */
+  .signup-button {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(45deg, #2575fc, #6a11cb);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(98, 0, 234, 0.4);
+  }
+  
+  /* Hover state for button */
+  .signup-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(98, 0, 234, 0.5);
+  }
+  
+  .signup-button:active {
+    transform: scale(0.98);
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .signup-form-container {
+      width: 90%;
+    }
+  }
+  

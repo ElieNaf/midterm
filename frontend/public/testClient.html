@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.IO Test Client</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>Socket.IO Test Client</h1>
+    <script>
+      // Connect to your Socket.IO server
+      const socket = io("http://localhost:3002"); // Replace with your server's URL
+
+      // Event: Connection established
+      socket.on("connect", () => {
+        console.log("Connected to server:", socket.id);
+
+        // Join a room
+        socket.emit("joinRoom", { sessionID: "testSession" });
+
+        // Test whiteboard update event
+        socket.emit("whiteboardUpdate", {
+          sessionID: "testSession",
+          data: "Sample data for whiteboard update",
+        });
+
+        // Test chat message event
+        socket.emit("chatMessage", {
+          sessionID: "testSession",
+          message: "Hello from test client",
+        });
+      });
+
+      // Listen for events
+      socket.on("userJoined", (data) => {
+        console.log("User joined:", data);
+      });
+
+      socket.on("whiteboardUpdate", (data) => {
+        console.log(
+          "Whiteboard update received:",
+          JSON.stringify(data, null, 2)
+        );
+      });
+
+      socket.on("chatMessage", (data) => {
+        console.log("Chat message received:", JSON.stringify(data, null, 2));
+      });
+
+      // Event: Disconnected
+      socket.on("disconnect", () => {
+        console.log("Disconnected from server");
+      });
+    </script>
+  </body>
+</html>
