@@ -15,9 +15,44 @@ const WhiteboardSession = () => {
   const [messages, setMessages] = useState([]); // State to store chat messages
   const [message, setMessage] = useState(""); // State for new chat message
   const [contentID, setContentID] = useState(null); // State to store content ID for updates
+  const [isListening, setIsListening] = useState(false); // State to track if mic is listening
 
-  // Fetch initial content and messages when the component mounts
+  // Speech Recognition API setup
+  const recognition = useRef(null);
+
   useEffect(() => {
+    // Initialize SpeechRecognition API
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition.current = new SpeechRecognition();
+      recognition.current.lang = "en-US"; // Set language
+      recognition.current.interimResults = false; // Get final results only
+
+      recognition.current.onresult = (event) => {
+        console.log("Full recognition event:", event); // Log full event for debugging
+        if (event.results && event.results[0] && event.results[0][0]) {
+          const transcript = event.results[0][0].transcript;
+          console.log("Speech recognized:", transcript);
+          setMessage((prev) => `${prev} ${transcript}`); // Append recognized text to the message
+        } else {
+          console.warn("No speech recognized.");
+        }
+      };
+
+      recognition.current.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        alert(`Speech recognition error: ${event.error}`);
+      };
+
+      recognition.current.onend = () => {
+        console.log("Recognition ended.");
+        setIsListening(false); // Stop listening when recognition ends
+      };
+    } else {
+      console.warn("Speech Recognition API is not supported in this browser.");
+    }
+
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
@@ -99,6 +134,25 @@ const WhiteboardSession = () => {
       socket.emit("leaveRoom", { sessionID: roomId });
     };
   }, [roomId]);
+
+  // Start listening to user input via the mic
+  const startListening = () => {
+    if (recognition.current) {
+      console.log("Starting recognition...");
+      setIsListening(true);
+      recognition.current.start();
+    } else {
+      alert("Speech Recognition API is not supported in this browser.");
+    }
+  };
+
+  // Stop listening to user input via the mic
+  const stopListening = () => {
+    if (recognition.current) {
+      console.log("Stopping recognition...");
+      recognition.current.stop();
+    }
+  };
 
   // Clear the canvas and save the cleared state to the database
   const clearCanvas = async () => {
@@ -261,6 +315,13 @@ const WhiteboardSession = () => {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type a message..."
             />
+            <button
+              onMouseDown={startListening}
+              onMouseUp={stopListening}
+              className={`chat-mic-button ${isListening ? "mic-active" : ""}`}
+            >
+              🎙
+            </button>
             <button onClick={sendMessage} className="chat-send-button">
               Send
             </button>
@@ -269,9 +330,7 @@ const WhiteboardSession = () => {
       </div>
 
       {/* Back Button */}
-      <button className="back-button" onClick={() => navigate("/")}>
-        Back to Homepage
-      </button>
+      <button className="back-button" onClick={() => navigate("/")}>Back to Homepage</button>
     </div>
   );
 };
