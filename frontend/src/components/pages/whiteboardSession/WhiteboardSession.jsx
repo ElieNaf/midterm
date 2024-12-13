@@ -8,35 +8,32 @@ import "./WhiteboardSession.css";
 const socket = io("http://localhost:3002");
 
 const WhiteboardSession = () => {
-  const { roomId } = useParams(); // Get roomId from URL parameters
-  const navigate = useNavigate(); // Navigation hook for routing
-  const canvasRef = useRef(null); // Reference to the canvas element
-  const [isDrawing, setIsDrawing] = useState(false); // State to track drawing status
-  const [messages, setMessages] = useState([]); // State to store chat messages
-  const [message, setMessage] = useState(""); // State for new chat message
-  const [contentID, setContentID] = useState(null); // State to store content ID for updates
-  const [isListening, setIsListening] = useState(false); // State to track if mic is listening
+  const { roomId } = useParams();
+  const navigate = useNavigate();
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState("");
+  const [contentID, setContentID] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [drawColor, setDrawColor] = useState("#000000");
+  const [lineWidth, setLineWidth] = useState(2);
 
-  // Speech Recognition API setup
   const recognition = useRef(null);
+  const lastPosition = useRef(null);
 
   useEffect(() => {
-    // Initialize SpeechRecognition API
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognition.current = new SpeechRecognition();
-      recognition.current.lang = "en-US"; // Set language
-      recognition.current.interimResults = false; // Get final results only
+      recognition.current.lang = "en-US";
+      recognition.current.interimResults = false;
 
       recognition.current.onresult = (event) => {
-        console.log("Full recognition event:", event); // Log full event for debugging
         if (event.results && event.results[0] && event.results[0][0]) {
           const transcript = event.results[0][0].transcript;
-          console.log("Speech recognized:", transcript);
-          setMessage((prev) => `${prev} ${transcript}`); // Append recognized text to the message
-        } else {
-          console.warn("No speech recognized.");
+          setMessage((prev) => `${prev} ${transcript}`);
         }
       };
 
@@ -46,35 +43,29 @@ const WhiteboardSession = () => {
       };
 
       recognition.current.onend = () => {
-        console.log("Recognition ended.");
-        setIsListening(false); // Stop listening when recognition ends
+        setIsListening(false);
       };
     } else {
-      console.warn("Speech Recognition API is not supported in this browser.");
+      console.warn("Speech Recognition API not supported.");
     }
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
-
-    // Set canvas dimensions and properties
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-    context.lineWidth = 2;
     context.lineCap = "round";
-    context.strokeStyle = "#000";
 
-    // Fetch whiteboard content from the server
     const fetchContent = async () => {
       try {
         const response = await axios.get(
           `http://localhost:3002/api/content/session/${roomId}`
         );
         if (response.data) {
-          setContentID(response.data.id); // Save content ID for updates
+          setContentID(response.data.id);
           if (response.data.data) {
             const img = new Image();
             img.src = response.data.data;
-            img.onload = () => context.drawImage(img, 0, 0); // Draw saved content
+            img.onload = () => context.drawImage(img, 0, 0);
           }
         }
       } catch (error) {
@@ -82,13 +73,18 @@ const WhiteboardSession = () => {
       }
     };
 
-    // Fetch chat messages from the server
     const fetchMessages = async () => {
       try {
         const response = await axios.get(
           `http://localhost:3002/api/messages/session/${roomId}`
         );
-        setMessages(response.data);
+        const timestampedMsgs = response.data.map((msg) => ({
+          ...msg,
+          time: msg.time
+            ? msg.time
+            : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        }));
+        setMessages(timestampedMsgs);
       } catch (error) {
         console.error("Error fetching messages:", error);
       }
@@ -97,33 +93,52 @@ const WhiteboardSession = () => {
     fetchContent();
     fetchMessages();
 
-    // Join the room and set up socket listeners
     socket.emit("joinRoom", { sessionID: roomId });
 
+    // When receiving startPath from others
     socket.on("startPath", (data) => {
       if (data.sessionID !== roomId) return;
-      const context = canvas.getContext("2d");
-      context.beginPath();
-      context.moveTo(data.offsetX, data.offsetY);
+      const ctx = canvas.getContext("2d");
+      ctx.beginPath();
+      ctx.lineCap = "round";
+      ctx.lineWidth = data.lineWidth;
+      ctx.strokeStyle = data.drawColor;
+      ctx.moveTo(data.offsetX, data.offsetY);
     });
 
+    // When receiving whiteboardUpdate from others
     socket.on("whiteboardUpdate", (data) => {
       if (data.sessionID !== roomId) return;
-      const context = canvas.getContext("2d");
-      context.beginPath();
-      context.arc(data.offsetX, data.offsetY, 2, 0, Math.PI * 2);
-      context.fillStyle = "#000";
-      context.fill();
-      context.closePath();
+      const ctx = canvas.getContext("2d");
+      ctx.beginPath();
+      ctx.lineCap = "round";
+      ctx.lineWidth = data.lineWidth;
+      ctx.strokeStyle = data.drawColor;
+      ctx.moveTo(data.lastX, data.lastY);
+      ctx.lineTo(data.offsetX, data.offsetY);
+      ctx.stroke();
+      ctx.closePath();
     });
 
+    // When receiving endDrawing from others
     socket.on("endDrawing", () => {
-      const context = canvas.getContext("2d");
-      context.closePath();
+      const ctx = canvas.getContext("2d");
+      ctx.closePath();
     });
 
+    // When receiving a chat message
     socket.on("chatMessage", (data) => {
-      setMessages((prev) => [...prev, data]);
+      const timestampedMessage = {
+        ...data,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, timestampedMessage]);
+    });
+
+    // NEW: When someone clears the canvas
+    socket.on("clearCanvas", () => {
+      // Just clear the local canvas here, no DB call
+      clearCanvasLocal();
     });
 
     return () => {
@@ -131,111 +146,129 @@ const WhiteboardSession = () => {
       socket.off("whiteboardUpdate");
       socket.off("endDrawing");
       socket.off("chatMessage");
+      socket.off("clearCanvas");
       socket.emit("leaveRoom", { sessionID: roomId });
     };
   }, [roomId]);
 
-  // Start listening to user input via the mic
   const startListening = () => {
     if (recognition.current) {
-      console.log("Starting recognition...");
       setIsListening(true);
       recognition.current.start();
     } else {
-      alert("Speech Recognition API is not supported in this browser.");
+      alert("Speech Recognition API not supported.");
     }
   };
 
-  // Stop listening to user input via the mic
   const stopListening = () => {
     if (recognition.current) {
-      console.log("Stopping recognition...");
       recognition.current.stop();
     }
   };
 
-  // Clear the canvas and save the cleared state to the database
-  const clearCanvas = async () => {
+  // Clears the local canvas only (no socket, no DB)
+  const clearCanvasLocal = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
-
-    // Clear the canvas visually
     context.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  // Clears the canvas and updates the DB, then notifies others
+  const clearCanvas = async () => {
+    clearCanvasLocal(); // Clear my canvas first
+
+    const canvas = canvasRef.current;
+    const blankDataURL = canvas.toDataURL("image/png");
 
     try {
-      const blankDataURL = canvas.toDataURL("image/png"); // Blank canvas data URL
       if (!contentID) {
-        console.error("Content ID not available. Cannot clear canvas.");
-        return;
+        // No existing content, create a new blank content entry
+        const response = await axios.post("http://localhost:3002/api/content", {
+          sessionID: roomId,
+          contentType: "drawing",
+          data: blankDataURL,
+        });
+        if (response.data && response.data.id) {
+          setContentID(response.data.id);
+        }
+      } else {
+        // Content exists, update it
+        await axios.put(`http://localhost:3002/api/content/${contentID}`, {
+          sessionID: roomId,
+          data: blankDataURL,
+        });
       }
 
-      // Save cleared canvas state to the server
-      await axios.put(`http://localhost:3002/api/content/${contentID}`, {
-        sessionID: roomId,
-        data: blankDataURL,
-      });
-
-      console.log("Canvas cleared and saved to database.");
+      // After successful update, notify others to clear their canvas
+      socket.emit("clearCanvas", { sessionID: roomId });
     } catch (error) {
       console.error("Error clearing canvas:", error);
     }
   };
 
-  // Start drawing on the canvas
   const startDrawing = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const context = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-    context.beginPath();
-    context.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.lineCap = "round";
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = lineWidth;
+
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
     setIsDrawing(true);
+    lastPosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     socket.emit("startPath", {
       sessionID: roomId,
       offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
+      lineWidth: lineWidth,
+      drawColor: drawColor,
     });
   };
 
-  let lastPosition = null; // Track the last position for smoother drawing
-
-  // Draw on the canvas
   const draw = (e) => {
-    if (!isDrawing) return;
+    if (!isDrawing || !lastPosition.current) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
+    const ctx = canvas.getContext("2d");
 
-    const context = canvas.getContext("2d");
-    if (lastPosition) {
-      context.beginPath();
-      context.moveTo(lastPosition.x, lastPosition.y);
-      context.lineTo(offsetX, offsetY);
-      context.stroke();
-      context.closePath();
-    }
+    ctx.lineCap = "round";
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = lineWidth;
 
-    lastPosition = { x: offsetX, y: offsetY }; // Update last position
+    ctx.beginPath();
+    ctx.moveTo(lastPosition.current.x, lastPosition.current.y);
+    ctx.lineTo(offsetX, offsetY);
+    ctx.stroke();
+    ctx.closePath();
 
     socket.emit("whiteboardUpdate", {
       sessionID: roomId,
       offsetX,
       offsetY,
+      lastX: lastPosition.current.x,
+      lastY: lastPosition.current.y,
+      lineWidth: lineWidth,
+      drawColor: drawColor,
     });
+
+    lastPosition.current = { x: offsetX, y: offsetY };
   };
 
-  // Stop drawing and save the canvas content
   const stopDrawing = () => {
+    if (!isDrawing) return;
     setIsDrawing(false);
-    lastPosition = null;
+    lastPosition.current = null;
     socket.emit("endDrawing", { sessionID: roomId });
     saveDrawing();
   };
 
-  // Save the current drawing to the server
   const saveDrawing = async () => {
     try {
       const dataURL = canvasRef.current.toDataURL("image/png");
@@ -249,7 +282,6 @@ const WhiteboardSession = () => {
     }
   };
 
-  // Send a chat message
   const sendMessage = () => {
     if (!message.trim()) return;
 
@@ -281,10 +313,35 @@ const WhiteboardSession = () => {
         backgroundPosition: "center",
       }}
     >
-      {/* Whiteboard Section */}
       <div className="flex-container">
         <div className="whiteboard-container">
           <h2>Whiteboard Session</h2>
+          <div className="toolbar">
+            <div className="color-picker-container">
+              <label className="color-picker-label" htmlFor="colorPicker">Brush Color:</label>
+              <input
+                type="color"
+                id="colorPicker"
+                value={drawColor}
+                onChange={(e) => setDrawColor(e.target.value)}
+                title="Select brush color"
+              />
+            </div>
+
+            <div className="thickness-container">
+              <label className="thickness-label" htmlFor="thicknessSlider">Brush Size:</label>
+              <input
+                type="range"
+                id="thicknessSlider"
+                min="1"
+                max="10"
+                value={lineWidth}
+                onChange={(e) => setLineWidth(parseInt(e.target.value, 10))}
+                title="Adjust brush thickness"
+              />
+            </div>
+          </div>
+
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
@@ -292,18 +349,19 @@ const WhiteboardSession = () => {
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
           />
-          <button className="clear-button" onClick={clearCanvas}>
+
+          <button className="clear-button" onClick={clearCanvas} title="Clear the whiteboard">
             Clear Canvas
           </button>
         </div>
 
-        {/* Chat Section */}
         <div className="chat-container">
           <h3>Chat</h3>
           <div className="chat-messages">
             {messages.map((msg, index) => (
-              <div key={index}>
+              <div key={index} className="chat-message">
                 <strong>{msg.senderName}:</strong> {msg.messageText}
+                {msg.time && <span className="message-time">({msg.time})</span>}
               </div>
             ))}
           </div>
@@ -319,18 +377,20 @@ const WhiteboardSession = () => {
               onMouseDown={startListening}
               onMouseUp={stopListening}
               className={`chat-mic-button ${isListening ? "mic-active" : ""}`}
+              title="Hold to speak"
             >
               🎙
             </button>
-            <button onClick={sendMessage} className="chat-send-button">
+            <button onClick={sendMessage} className="chat-send-button" title="Send message">
               Send
             </button>
           </div>
         </div>
       </div>
 
-      {/* Back Button */}
-      <button className="back-button" onClick={() => navigate("/")}>Back to Homepage</button>
+      <button className="back-button" onClick={() => navigate("/")} title="Go back to homepage">
+        Back to Homepage
+      </button>
     </div>
   );
 };
