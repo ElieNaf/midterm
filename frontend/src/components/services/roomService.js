@@ -1,15 +1,17 @@
 // services/roomService.js
 import axios from "axios";
 
-const API_URL = "http://localhost:3002/api/rooms"; // Base API URL for room operations
-const USERS_API_URL = "http://localhost:3002/api/users"; // API URL for user data
-const PARTICIPANTS_API_URL = "http://localhost:3002/api/room-participants"; // API URL for participants
+// Use environment variable for base URL or fallback if not provided
+const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:3002";
+const API_URL = `${BASE_URL}/api/rooms`; 
+const USERS_API_URL = `${BASE_URL}/api/users`;
+const PARTICIPANTS_API_URL = `${BASE_URL}/api/room-participants`;
 
 // Fetch all rooms for the authenticated user
 export const fetchRooms = async (token) => {
   try {
     const response = await axios.get(API_URL, {
-      headers: { Authorization: `Bearer ${token}` }, // Include token in the request header
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {

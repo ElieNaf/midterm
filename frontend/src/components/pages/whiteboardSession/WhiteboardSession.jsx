@@ -4,31 +4,46 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import "./WhiteboardSession.css";
 
-// Initialize Socket.io client connection
-const socket = io("http://localhost:3002");
+/**
+ * Initialize Socket.io client connection.
+ * Use REACT_APP_BASE_URL from environment variables or fallback to localhost.
+ * This makes the app flexible for deployments in different environments.
+ */
+const baseURL = process.env.REACT_APP_BASE_URL || "http://localhost:3002";
+const socket = io(baseURL);
 
 const WhiteboardSession = () => {
+  // Extract the roomId from URL parameters
   const { roomId } = useParams();
   const navigate = useNavigate();
 
+  /** References to the main and overlay canvas elements for drawing and previews */
   const canvasRef = useRef(null);
-  const overlayRef = useRef(null); // Overlay canvas for shape previews
+  const overlayRef = useRef(null);
 
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const [contentID, setContentID] = useState(null);
-  const [isListening, setIsListening] = useState(false);
-  const [drawColor, setDrawColor] = useState("#000000");
-  const [lineWidth, setLineWidth] = useState(2);
-  const [tool, setTool] = useState("pen");
-  const [cursors, setCursors] = useState({});
+  // State variables for the whiteboard
+  const [isDrawing, setIsDrawing] = useState(false);    // Are we currently drawing?
+  const [messages, setMessages] = useState([]);         // Chat messages in the session
+  const [message, setMessage] = useState("");           // Current chat input text
+  const [contentID, setContentID] = useState(null);     // ID of the saved whiteboard content
+  const [isListening, setIsListening] = useState(false);// Is the mic currently recording speech?
+  const [drawColor, setDrawColor] = useState("#000000");// Current pen/shape color
+  const [lineWidth, setLineWidth] = useState(2);        // Current line thickness
+  const [tool, setTool] = useState("pen");              // Current drawing tool: pen, rectangle, circle, or line
+  const [cursors, setCursors] = useState({});           // Positions of other users' cursors
+  const [showHelp, setShowHelp] = useState(false);      // Show/hide help modal
 
+  // Refs for speech recognition and drawing positions
   const recognition = useRef(null);
-  const lastPosition = useRef(null);
-  const startShapePos = useRef(null);
+  const lastPosition = useRef(null);    // Last known position when drawing pen strokes
+  const startShapePos = useRef(null);   // Starting position for shape tools (rectangle, circle, line)
 
+  /**
+   * useEffect: Set up speech recognition, canvas configuration, fetch initial content & messages,
+   * and establish socket event handlers when the component mounts or roomId changes.
+   */
   useEffect(() => {
+    // Set up speech recognition if available
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -36,6 +51,7 @@ const WhiteboardSession = () => {
       recognition.current.lang = "en-US";
       recognition.current.interimResults = false;
 
+      // Handle recognized speech results
       recognition.current.onresult = (event) => {
         if (event.results && event.results[0] && event.results[0][0]) {
           const transcript = event.results[0][0].transcript;
@@ -43,33 +59,39 @@ const WhiteboardSession = () => {
         }
       };
 
+      // Handle speech recognition errors
       recognition.current.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
         alert(`Speech recognition error: ${event.error}`);
       };
 
+      // When speech recognition ends, update state
       recognition.current.onend = () => {
         setIsListening(false);
       };
     }
 
+    // Configure canvas
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     ctx.lineCap = "round";
 
+    // Configure overlay canvas for shape previews
     const overlay = overlayRef.current;
     overlay.width = canvas.offsetWidth;
     overlay.height = canvas.offsetHeight;
     const overlayCtx = overlay.getContext("2d");
     overlayCtx.lineCap = "round";
 
+    /**
+     * Fetch existing whiteboard content from the server and load it into the canvas.
+     * If previously saved data is found, draw it on the canvas so users resume from last state.
+     */
     const fetchContent = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:3002/api/content/session/${roomId}`
-        );
+        const response = await axios.get(`${baseURL}/api/content/session/${roomId}`);
         if (response.data) {
           setContentID(response.data.id);
           if (response.data.data) {
@@ -83,11 +105,13 @@ const WhiteboardSession = () => {
       }
     };
 
+    /**
+     * Fetch chat messages from the server for this session.
+     * Adds timestamps if not present, and sets state.
+     */
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:3002/api/messages/session/${roomId}`
-        );
+        const response = await axios.get(`${baseURL}/api/messages/session/${roomId}`);
         const timestampedMsgs = response.data.map((msg) => ({
           ...msg,
           time: msg.time
@@ -100,11 +124,14 @@ const WhiteboardSession = () => {
       }
     };
 
+    // Call the content and message fetch functions
     fetchContent();
     fetchMessages();
 
+    // Join the room via sockets
     socket.emit("joinRoom", { sessionID: roomId });
 
+    // Socket event listeners for drawing, chat, clearing, cursors, etc.
     socket.on("startPath", (data) => {
       if (data.sessionID !== roomId) return;
       ctx.beginPath();
@@ -121,6 +148,7 @@ const WhiteboardSession = () => {
       ctx.lineWidth = data.lineWidth;
       ctx.strokeStyle = data.drawColor;
 
+      // Draw based on tool type
       if (data.tool === "rectangle") {
         const rectX = Math.min(data.lastX, data.offsetX);
         const rectY = Math.min(data.lastY, data.offsetY);
@@ -136,7 +164,7 @@ const WhiteboardSession = () => {
         ctx.lineTo(data.offsetX, data.offsetY);
         ctx.stroke();
       } else {
-        // pen
+        // Default to pen strokes
         ctx.moveTo(data.lastX, data.lastY);
         ctx.lineTo(data.offsetX, data.offsetY);
         ctx.stroke();
@@ -149,6 +177,7 @@ const WhiteboardSession = () => {
     });
 
     socket.on("chatMessage", (data) => {
+      // Receive new chat messages and append them to the state
       const timestampedMessage = {
         ...data,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -161,10 +190,12 @@ const WhiteboardSession = () => {
     });
 
     socket.on("cursorMove", ({ userID, x, y, color }) => {
+      // Update the positions of other users' cursors in real-time
       setCursors((prev) => ({ ...prev, [userID]: { x, y, color } }));
     });
 
     socket.on("userLeft", ({ userID }) => {
+      // Remove the cursor of a user who left
       setCursors((prev) => {
         const newCursors = { ...prev };
         delete newCursors[userID];
@@ -172,6 +203,7 @@ const WhiteboardSession = () => {
       });
     });
 
+    // Cleanup event listeners on unmount or roomId change
     return () => {
       socket.off("startPath");
       socket.off("whiteboardUpdate");
@@ -184,6 +216,10 @@ const WhiteboardSession = () => {
     };
   }, [roomId]);
 
+  /**
+   * startListening:
+   * Initiates speech recognition if supported, allowing user to dictate chat messages.
+   */
   const startListening = () => {
     if (recognition.current) {
       setIsListening(true);
@@ -193,12 +229,20 @@ const WhiteboardSession = () => {
     }
   };
 
+  /**
+   * stopListening:
+   * Stops speech recognition and updates state accordingly.
+   */
   const stopListening = () => {
     if (recognition.current) {
       recognition.current.stop();
     }
   };
 
+  /**
+   * clearCanvasLocal:
+   * Clears the main and overlay canvases visually without updating the server.
+   */
   const clearCanvasLocal = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -207,16 +251,19 @@ const WhiteboardSession = () => {
     overlay.clearRect(0, 0, canvas.width, canvas.height);
   };
 
+  /**
+   * clearCanvas:
+   * Clears the canvas and updates the server with a blank state, then notifies everyone via socket.
+   */
   const clearCanvas = async () => {
     clearCanvasLocal();
-
     const canvas = canvasRef.current;
     const blankDataURL = canvas.toDataURL("image/png");
 
     try {
-      // Update the saved content to blank
+      // Update the server with blank content
       if (!contentID) {
-        const response = await axios.post("http://localhost:3002/api/content", {
+        const response = await axios.post(`${baseURL}/api/content`, {
           sessionID: roomId,
           contentType: "drawing",
           data: blankDataURL,
@@ -225,7 +272,7 @@ const WhiteboardSession = () => {
           setContentID(response.data.id);
         }
       } else {
-        await axios.put(`http://localhost:3002/api/content/${contentID}`, {
+        await axios.put(`${baseURL}/api/content/${contentID}`, {
           sessionID: roomId,
           data: blankDataURL,
         });
@@ -236,13 +283,16 @@ const WhiteboardSession = () => {
     }
   };
 
-  // Save the current drawing state to the server after each completed stroke/shape
+  /**
+   * saveDrawing:
+   * After completing a stroke or shape, saves the current canvas state to the server so that
+   * the session can resume from this state in the future.
+   */
   const saveDrawing = async () => {
     try {
       const dataURL = canvasRef.current.toDataURL("image/png");
-      // If we have a contentID, update the existing record, otherwise create a new one
       if (!contentID) {
-        const response = await axios.post("http://localhost:3002/api/content", {
+        const response = await axios.post(`${baseURL}/api/content`, {
           sessionID: roomId,
           contentType: "drawing",
           data: dataURL,
@@ -251,7 +301,7 @@ const WhiteboardSession = () => {
           setContentID(response.data.id);
         }
       } else {
-        await axios.put(`http://localhost:3002/api/content/${contentID}`, {
+        await axios.put(`${baseURL}/api/content/${contentID}`, {
           sessionID: roomId,
           data: dataURL,
         });
@@ -261,6 +311,11 @@ const WhiteboardSession = () => {
     }
   };
 
+  /**
+   * sendMessage:
+   * Sends the current chat message to the server and resets the input field if successful.
+   * Requires user authentication (userId and username in localStorage).
+   */
   const sendMessage = () => {
     if (!message.trim()) return;
 
@@ -283,6 +338,10 @@ const WhiteboardSession = () => {
     setMessage("");
   };
 
+  /**
+   * exportCanvas:
+   * Exports the current canvas content as a PNG image for the user to download.
+   */
   const exportCanvas = () => {
     const dataURL = canvasRef.current.toDataURL("image/png");
     const link = document.createElement('a');
@@ -291,6 +350,10 @@ const WhiteboardSession = () => {
     link.click();
   };
 
+  /**
+   * drawShapePreview:
+   * Shows a live preview of the shape being drawn (rectangle, circle, line) on the overlay canvas as the user drags.
+   */
   const drawShapePreview = (toolType, overlayCtx, startX, startY, endX, endY) => {
     overlayCtx.clearRect(0, 0, overlayCtx.canvas.width, overlayCtx.canvas.height);
     overlayCtx.lineWidth = lineWidth;
@@ -314,6 +377,11 @@ const WhiteboardSession = () => {
     overlayCtx.closePath();
   };
 
+  /**
+   * startDrawing:
+   * Initiates drawing based on the current tool. For pen, begins a stroke.
+   * For shapes, records the start position.
+   */
   const startDrawing = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -338,12 +406,17 @@ const WhiteboardSession = () => {
         drawColor: drawColor,
       });
     } else {
-      // shapes
+      // For shape tools, just record the start position
       setIsDrawing(true);
       startShapePos.current = { x, y };
     }
   };
 
+  /**
+   * draw:
+   * On mouse move, if drawing pen, continue the stroke.
+   * If using a shape tool, show a preview of the shape on the overlay.
+   */
   const draw = (e) => {
     sendCursorPosition(e);
     if (!isDrawing) return;
@@ -381,13 +454,18 @@ const WhiteboardSession = () => {
 
       lastPosition.current = { x: offsetX, y: offsetY };
     } else {
-      // Show shape preview on overlay
+      // Show shape preview
       if (startShapePos.current) {
         drawShapePreview(tool, overlayCtx, startShapePos.current.x, startShapePos.current.y, offsetX, offsetY);
       }
     }
   };
 
+  /**
+   * stopDrawing:
+   * On mouse up or leaving the canvas, finalize the stroke or shape,
+   * send the final line/shape to the server, and save the drawing state.
+   */
   const stopDrawing = async (e) => {
     sendCursorPosition(e);
     if (!isDrawing) return;
@@ -405,7 +483,6 @@ const WhiteboardSession = () => {
     if (tool === "pen") {
       lastPosition.current = null;
       socket.emit("endDrawing", { sessionID: roomId });
-      // Save the board after finishing the stroke
       await saveDrawing();
     } else if (tool === "rectangle" || tool === "circle" || tool === "line") {
       const ctx = canvas.getContext("2d");
@@ -416,7 +493,7 @@ const WhiteboardSession = () => {
       const startX = startShapePos.current.x;
       const startY = startShapePos.current.y;
 
-      // Draw final shape on main canvas
+      // Draw the final shape on the main canvas
       ctx.beginPath();
       if (tool === "rectangle") {
         const rectX = Math.min(startX, endX);
@@ -448,11 +525,14 @@ const WhiteboardSession = () => {
       socket.emit("endDrawing", { sessionID: roomId });
 
       startShapePos.current = null;
-      // Save the board after finishing the shape
       await saveDrawing();
     }
   };
 
+  /**
+   * sendCursorPosition:
+   * Sends the user's current mouse position to the server so others see their cursor.
+   */
   const sendCursorPosition = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -464,6 +544,23 @@ const WhiteboardSession = () => {
     });
   };
 
+  /**
+   * toggleHelp:
+   * Toggles the help modal that explains how to use the whiteboard session page.
+   */
+  const toggleHelp = () => {
+    setShowHelp((prev) => !prev);
+  };
+
+  /**
+   * Render the WhiteboardSession component:
+   * - Drawing controls (color, size, tool)
+   * - Export, help, and clear canvas options
+   * - Canvas and overlay for drawing
+   * - Chat messages and input
+   * - Help modal for instructions
+   * - Navigation back to homepage
+   */
   return (
     <div
       className="container"
@@ -516,8 +613,8 @@ const WhiteboardSession = () => {
               </select>
             </div>
 
-            {/* Removed Undo/Redo buttons */}
             <button onClick={exportCanvas} title="Export Canvas as PNG">Export</button>
+            <button onClick={toggleHelp} title="Show Help">Help</button>
           </div>
 
           <div style={{ position: 'relative' }}>
@@ -595,6 +692,23 @@ const WhiteboardSession = () => {
       <button className="back-button" onClick={() => navigate("/")} title="Go back to homepage">
         Back to Homepage
       </button>
+
+      {showHelp && (
+        <div className="help-overlay">
+          <div className="help-modal">
+            <h3>Help & Instructions</h3>
+            <p><strong>Brush Color:</strong> Choose the color of your pen or shape border.</p>
+            <p><strong>Brush Size:</strong> Adjust the thickness of your pen or shape lines.</p>
+            <p><strong>Tool:</strong> Select Pen for freehand drawing, or Rectangle/Circle/Line to draw shapes.  
+               Click and drag to preview the shape before releasing the mouse.</p>
+            <p><strong>Export:</strong> Download your current canvas as a PNG image.</p>
+            <p><strong>Clear Canvas:</strong> Erase everything and start fresh.</p>
+            <p><strong>Chat:</strong> Send messages to others in real-time.</p>
+            <p><strong>Mic Button:</strong> Hold to use speech-to-text for the chat input.</p>
+            <button onClick={toggleHelp}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
