@@ -1,8 +1,6 @@
-// controllers/chatMessageController.js
 const chatMessageService = require("../services/chatMessageService");
 
 class ChatMessageController {
-  // Controller for creating a new chat message
   async createMessage(req, res) {
     try {
       const message = await chatMessageService.createMessage(req.body);
@@ -13,26 +11,33 @@ class ChatMessageController {
     }
   }
 
-  // Controller for retrieving all messages in a specific session
   async getMessagesBySession(req, res) {
     try {
       const { sessionID } = req.params;
       const messages = await chatMessageService.getMessagesBySession(sessionID);
-      res.status(200).json(messages);
+
+      // Map messages to include senderName
+      const mappedMessages = messages.map(msg => ({
+        messageID: msg.messageID,
+        sessionID: msg.sessionID,
+        senderID: msg.senderID,
+        senderName: msg.User?.Username || "Unknown",
+        messageText: msg.messageText,
+        createdAt: msg.createdAt
+      }));
+
+      res.status(200).json(mappedMessages);
     } catch (error) {
       console.error("Error retrieving messages:", error);
       res.status(500).json({ error: "Failed to retrieve messages" });
     }
   }
 
-  // Controller for deleting a specific message by its ID
   async deleteMessage(req, res) {
     try {
       const { messageID } = req.params;
       await chatMessageService.deleteMessage(messageID);
-      res
-        .status(200)
-        .json({ message: "Message has been deleted successfully" });
+      res.status(200).json({ message: "Message has been deleted successfully" });
     } catch (error) {
       console.error("Error deleting message:", error);
       res.status(500).json({ error: "Failed to delete message" });
