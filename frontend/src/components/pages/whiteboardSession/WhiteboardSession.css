@@ -98,23 +98,41 @@ canvas {
   gap: 5px;
   font-weight: 500;
 }
+
 .tool-selector label {
   font-size: 14px;
   opacity: 0.8;
 }
+
+/* Style the select element */
 .tool-selector select {
   padding: 5px 10px;
   border-radius: 8px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.7); /* Darker background for better contrast */
+  color: #fff; /* White text for readability */
   font-size: 14px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s;
+  appearance: none; /* Remove default arrow styling (if supported) */
 }
+
+/* Ensure the dropdown text (options) is visible and consistent */
+.tool-selector select option {
+  background: #222; /* Dark background for options */
+  color: #fff; /* White text for visibility */
+}
+
+/* Hover and focus states for the select */
 .tool-selector select:hover {
   border-color: #50b3f3;
+  background: rgba(0, 0, 0, 0.8); /* Slightly darker on hover */
+}
+
+.tool-selector select:focus {
+  border-color: #50b3f3;
+  box-shadow: 0 0 0 3px rgba(80,179,243,0.3);
 }
 
 /* Buttons (Export, Help, Clear) */
