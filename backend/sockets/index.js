@@ -1,4 +1,5 @@
-const chatMessageService = require("../services/chatMessageService"); // Correct import
+const chatMessageService = require("../services/chatMessageService");
+const whiteboardContentService = require("../services/whiteboardContentService");
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
@@ -11,10 +12,35 @@ module.exports = (io) => {
       console.log(`User ${socket.id} joined room ${sessionID}`);
     });
 
-    // Listen for whiteboard updates and broadcast to the room
-    socket.on("whiteboardUpdate", async (data) => {
-      const { sessionID, contentType, data: drawingData, offsetX, offsetY, isDrawing } = data;
+    // Handle the startPath event from the sender
+    socket.on("startPath", (data) => {
+      const { sessionID, offsetX, offsetY, lineWidth, drawColor } = data;
+      // Broadcast to everyone in the session (except sender)
+      io.to(sessionID).emit("startPath", {
+        sessionID,
+        offsetX,
+        offsetY,
+        lineWidth,
+        drawColor,
+      });
+    });
 
+    // Handle the whiteboardUpdate event
+    socket.on("whiteboardUpdate", async (data) => {
+      const { 
+        sessionID, 
+        contentType, 
+        data: drawingData, 
+        offsetX, 
+        offsetY, 
+        lastX, 
+        lastY, 
+        lineWidth, 
+        drawColor, 
+        isDrawing 
+      } = data;
+
+      // If it's a save event with contentType and drawing data
       if (contentType && drawingData) {
         try {
           await whiteboardContentService.createContent({
@@ -27,21 +53,44 @@ module.exports = (io) => {
           console.error("Error auto-saving drawing:", error);
         }
       } else {
-        io.to(sessionID).emit("whiteboardUpdate", { sessionID, offsetX, offsetY, isDrawing });
+        // Broadcast updated line segment with brush properties
+        io.to(sessionID).emit("whiteboardUpdate", {
+          sessionID,
+          offsetX,
+          offsetY,
+          lastX,
+          lastY,
+          lineWidth,
+          drawColor,
+          isDrawing
+        });
       }
     });
 
-    // Listen for chat messages and broadcast to the room
+    // Handle endDrawing event
+    socket.on("endDrawing", (data) => {
+      const { sessionID } = data;
+      // Broadcast the endDrawing event to everyone in the room
+      io.to(sessionID).emit("endDrawing", { sessionID });
+    });
+
+    // NEW: Handle clearCanvas event
+    socket.on("clearCanvas", ({ sessionID }) => {
+      // Broadcast to all in the room that they should clear the canvas
+      io.to(sessionID).emit("clearCanvas");
+      console.log(`Canvas cleared for session ${sessionID}`);
+    });
+
+    // Handle chat messages
     socket.on("chatMessage", async (data) => {
       console.log("Received chat message:", data);
 
-      // Extract details from the message
       const { sessionID, senderID, senderName, messageText } = data;
 
       // Broadcast the chat message to everyone in the room
       io.to(sessionID).emit("chatMessage", {
         senderID,
-        senderName, // Include the sender's name in the broadcast
+        senderName,
         messageText,
       });
 
@@ -56,6 +105,13 @@ module.exports = (io) => {
       } catch (error) {
         console.error("Error saving chat message:", error);
       }
+    });
+
+    // Handle typing indicator and broadcast
+    socket.on("userTyping", (data) => {
+      console.log("User typing event received:", data);
+      const { sessionID, username } = data;
+      socket.to(sessionID).emit("userTyping", { username });
     });
 
     // Handle user leaving a room
